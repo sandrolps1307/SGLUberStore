@@ -1,15 +1,23 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Painel Admin - SGL Uber Store</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Admin - SGLUberStore</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <style>
 body{
-    font-family: Arial, sans-serif;
-    background:#f3f4f6;
+    font-family: Arial;
+    background:#f4f6f9;
     padding:20px;
+}
+.container{
+    max-width:900px;
+    margin:auto;
 }
 h2{
     text-align:center;
@@ -17,60 +25,58 @@ h2{
 .card{
     background:white;
     padding:20px;
-    border-radius:15px;
+    border-radius:10px;
     box-shadow:0 5px 15px rgba(0,0,0,0.1);
     margin-bottom:20px;
 }
-input{
+input, textarea{
     width:100%;
     padding:10px;
     margin-bottom:10px;
-    border-radius:8px;
-    border:1px solid #ddd;
-    font-size:14px;
+    border-radius:6px;
+    border:1px solid #ccc;
 }
 button{
     padding:10px 15px;
     border:none;
-    border-radius:8px;
+    border-radius:6px;
     cursor:pointer;
-    font-weight:bold;
 }
-.btn-primary{
-    background:#2563eb;
+.btn{
+    background:#007bff;
+    color:white;
+}
+.btn-danger{
+    background:#dc3545;
     color:white;
 }
 .btn-edit{
-    background:#f59e0b;
+    background:#28a745;
     color:white;
-    margin-left:5px;
-}
-.btn-danger{
-    background:#dc2626;
-    color:white;
-    margin-left:5px;
 }
 .produto{
     display:flex;
-    align-items:center;
     justify-content:space-between;
-    padding:10px 0;
+    align-items:center;
+    padding:10px;
     border-bottom:1px solid #eee;
+}
+.produto img{
+    width:60px;
+    height:60px;
+    object-fit:cover;
+    border-radius:6px;
 }
 .produto-info{
     display:flex;
     align-items:center;
     gap:10px;
 }
-img{
-    width:60px;
-    height:60px;
-    object-fit:cover;
-    border-radius:8px;
-}
 </style>
 </head>
 <body>
+
+<div class="container">
 
 <h2>Painel Administrativo</h2>
 
@@ -78,30 +84,27 @@ img{
 <input type="hidden" id="docId">
 
 <input type="text" id="nome" placeholder="Nome do Produto">
-<input type="text" id="descricao" placeholder="Descrição">
+<textarea id="descricao" placeholder="Descrição"></textarea>
 <input type="number" id="preco" placeholder="Preço">
-<input type="number" id="estoque" placeholder="Quantidade em Estoque">
+<input type="number" id="estoque" placeholder="Quantidade em estoque">
 <input type="file" id="imagemFile">
 
-<button class="btn-primary" onclick="salvar()">Salvar / Atualizar</button>
+<button class="btn" onclick="salvarProduto()">Salvar / Atualizar</button>
 </div>
 
 <div class="card">
-<h3>Produtos Cadastrados</h3>
-<div id="lista"></div>
+<h3>Lista de Produtos</h3>
+<div id="listaProdutos"></div>
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+</div>
 
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCEYntSBEXEv58NV_Eck53HDG3CuzdlwhQ",
   authDomain: "sgl-uber-store.firebaseapp.com",
   projectId: "sgl-uber-store",
-  storageBucket: "sgl-uber-store.firebasestorage.app",
+  storageBucket: "sgl-uber-store.appspot.com",
   messagingSenderId: "225084657523",
   appId: "1:225084657523:web:30e89e1f048fd1fd40bf06"
 };
@@ -110,7 +113,78 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-const lista = document.getElementById("lista");
+const lista = document.getElementById("listaProdutos");
+
+async function salvarProduto(){
+
+    const id = document.getElementById("docId").value;
+    const nome = document.getElementById("nome").value;
+    const descricao = document.getElementById("descricao").value;
+    const preco = document.getElementById("preco").value;
+    const estoque = document.getElementById("estoque").value;
+    const file = document.getElementById("imagemFile").files[0];
+
+    if(!nome || !preco){
+        alert("Preencha nome e preço");
+        return;
+    }
+
+    let imageUrl = "";
+
+    if(file){
+        const storageRef = storage.ref("produtos/" + Date.now() + "_" + file.name);
+        await storageRef.put(file);
+        imageUrl = await storageRef.getDownloadURL();
+    }
+
+    const produto = {
+        nome,
+        descricao,
+        preco: parseFloat(preco),
+        estoque: parseInt(estoque) || 0
+    };
+
+    if(imageUrl){
+        produto.imagem = imageUrl;
+    }
+
+    if(id){
+        await db.collection("produtos").doc(id).update(produto);
+        alert("Produto atualizado!");
+    } else {
+        await db.collection("produtos").add(produto);
+        alert("Produto cadastrado!");
+    }
+
+    limparFormulario();
+}
+
+function limparFormulario(){
+    document.getElementById("docId").value = "";
+    document.getElementById("nome").value = "";
+    document.getElementById("descricao").value = "";
+    document.getElementById("preco").value = "";
+    document.getElementById("estoque").value = "";
+    document.getElementById("imagemFile").value = "";
+}
+
+async function editar(id){
+    const docSnap = await db.collection("produtos").doc(id).get();
+    const p = docSnap.data();
+
+    document.getElementById("docId").value = id;
+    document.getElementById("nome").value = p.nome;
+    document.getElementById("descricao").value = p.descricao;
+    document.getElementById("preco").value = p.preco;
+    document.getElementById("estoque").value = p.estoque;
+}
+
+async function excluir(id){
+    if(confirm("Deseja excluir este produto?")){
+        await db.collection("produtos").doc(id).delete();
+        alert("Produto excluído!");
+    }
+}
 
 db.collection("produtos").onSnapshot(snapshot => {
     lista.innerHTML = "";
@@ -124,93 +198,18 @@ db.collection("produtos").onSnapshot(snapshot => {
                 <img src="${p.imagem || ''}">
                 <div>
                     <strong>${p.nome}</strong><br>
-                    R$ ${p.preco} <br>
+                    R$ ${p.preco}<br>
                     Estoque: ${p.estoque}
                 </div>
             </div>
             <div>
-                <button class="btn-edit" onclick="editar('${doc.id}','${p.nome}','${p.descricao}','${p.preco}','${p.estoque}','${p.imagem}')">Editar</button>
+                <button class="btn-edit" onclick="editar('${doc.id}')">Editar</button>
                 <button class="btn-danger" onclick="excluir('${doc.id}')">Excluir</button>
             </div>
         </div>
         `;
     });
 });
-
-async function salvar(){
-
-    const id = document.getElementById("docId").value;
-    const nome = document.getElementById("nome").value;
-    const descricao = document.getElementById("descricao").value;
-    const preco = Number(document.getElementById("preco").value);
-    const estoque = Number(document.getElementById("estoque").value);
-    const file = document.getElementById("imagemFile").files[0];
-
-    try {
-
-        let imagemURL = "";
-
-        if(file){
-            const storageRef = storage.ref("produtos/" + Date.now() + "_" + file.name);
-            await storageRef.put(file);
-            imagemURL = await storageRef.getDownloadURL();
-        }
-
-        const produto = {
-            nome,
-            descricao,
-            preco,
-            estoque,
-            imagem: imagemURL
-        };
-
-        if(id){
-
-            if(!imagemURL){
-                const docOld = await db.collection("produtos").doc(id).get();
-                produto.imagem = docOld.data().imagem;
-            }
-
-            await db.collection("produtos").doc(id).update(produto);
-            alert("Produto atualizado!");
-
-        } else {
-
-            await db.collection("produtos").add(produto);
-            alert("Produto cadastrado!");
-
-        }
-
-        limpar();
-
-    } catch (erro) {
-        console.error("Erro:", erro);
-        alert("Erro ao salvar. Verifique o console.");
-    }
-}
-
-function editar(id,n,d,p,e,img){
-    document.getElementById("docId").value = id;
-    document.getElementById("nome").value = n;
-    document.getElementById("descricao").value = d;
-    document.getElementById("preco").value = p;
-    document.getElementById("estoque").value = e;
-}
-
-function excluir(id){
-    if(confirm("Deseja excluir este produto?")){
-        db.collection("produtos").doc(id).delete();
-    }
-}
-
-function limpar(){
-    document.getElementById("docId").value = "";
-    document.getElementById("nome").value = "";
-    document.getElementById("descricao").value = "";
-    document.getElementById("preco").value = "";
-    document.getElementById("estoque").value = "";
-    document.getElementById("imagemFile").value = "";
-}
 </script>
 
 </body>
