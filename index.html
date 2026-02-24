@@ -26,6 +26,7 @@ body {
 
 .subtitle {
     color: #ff6a00;
+    margin-bottom: 8px;
 }
 
 .card {
@@ -57,21 +58,10 @@ body {
     font-weight: bold;
 }
 
-button {
-    background-color: #ff6a00;
-    color: white;
-    border: none;
-    padding: 10px;
-    width: 100%;
-    border-radius: 12px;
-    cursor: pointer;
-    margin-top: 10px;
+.pix-msg {
+    color: #22c55e;
     font-weight: bold;
-}
-
-button:disabled {
-    background: #555;
-    cursor: not-allowed;
+    margin-top: 5px;
 }
 
 .pix-card {
@@ -90,10 +80,13 @@ button:disabled {
 
     <div class="header">
         <h1>SGL Uber Store</h1>
-        <div class="subtitle"> Pensando no seu conforto, tenho alguns itens disponíveis durante a viagem.</div>
-        <div class="subtitle"> Se fizer sentido para você, ao comprar estará apoiando meu crescimento e meu trabalho.</div>
+        <div class="subtitle">
+            Pensando no seu conforto, tenho alguns itens disponíveis durante a viagem.
+        </div>
+        <div class="subtitle">
+            Se fizer sentido para você, ao comprar estará apoiando meu crescimento e meu trabalho.
+        </div>
     </div>
-    
 
     <div id="products"></div>
 
@@ -117,7 +110,6 @@ const firebaseConfig = {
   apiKey: "AIzaSyCEYntSBEXEv58NV_Eck53HDG3CuzdlwhQ",
   authDomain: "sgl-uber-store.firebaseapp.com",
   projectId: "sgl-uber-store",
-  storageBucket: "sgl-uber-store.firebasestorage.app",
   messagingSenderId: "225084657523",
   appId: "1:225084657523:web:30e89e1f048fd1fd40bf06"
 };
@@ -133,17 +125,16 @@ db.collection("produtos").onSnapshot(snapshot => {
         const p = doc.data();
 
         let estoqueHTML = "";
-        let botaoHTML = "";
 
         if (p.estoque > 0) {
-            estoqueHTML = `<p class="estoque-ok">Em estoque: ${p.estoque}</p>`;
-            //botaoHTML = `<button>Comprar</button>`;
-            <p style="color:green;font-weight:bold;">
-                💳 Pagamento via Pix durante a viagem
-            </p>
+            estoqueHTML = `
+                <p class="estoque-ok">Em estoque: ${p.estoque}</p>
+                <p class="pix-msg">💳 Pagamento via Pix durante a viagem</p>
+            `;
         } else {
-            estoqueHTML = `<p class="estoque-zero">Produto esgotado</p>`;
-            botaoHTML = `<button disabled>Indisponível</button>`;
+            estoqueHTML = `
+                <p class="estoque-zero">Produto esgotado</p>
+            `;
         }
 
         container.innerHTML += `
@@ -153,7 +144,6 @@ db.collection("produtos").onSnapshot(snapshot => {
                 <p>${p.descricao}</p>
                 <p class="price">R$ ${p.preco}</p>
                 ${estoqueHTML}
-                ${botaoHTML}
             </div>
         `;
     });
@@ -168,7 +158,3 @@ function copyPix() {
 
 </body>
 </html>
-
-
-
-
