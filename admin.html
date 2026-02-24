@@ -2,20 +2,23 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Painel Admin - SGL</title>
+<title>Painel Admin - SGL Uber Store</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     background:#f3f4f6;
     padding:20px;
+}
+h2{
+    text-align:center;
 }
 .card{
     background:white;
     padding:20px;
-    border-radius:12px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
     margin-bottom:20px;
 }
 input{
@@ -24,31 +27,45 @@ input{
     margin-bottom:10px;
     border-radius:8px;
     border:1px solid #ddd;
+    font-size:14px;
 }
 button{
     padding:10px 15px;
     border:none;
     border-radius:8px;
     cursor:pointer;
+    font-weight:bold;
 }
 .btn-primary{
     background:#2563eb;
     color:white;
 }
-.btn-danger{
-    background:#dc2626;
-    color:white;
-}
 .btn-edit{
     background:#f59e0b;
     color:white;
+    margin-left:5px;
+}
+.btn-danger{
+    background:#dc2626;
+    color:white;
+    margin-left:5px;
 }
 .produto{
-    padding:10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 0;
     border-bottom:1px solid #eee;
+}
+.produto-info{
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
 img{
     width:60px;
+    height:60px;
+    object-fit:cover;
     border-radius:8px;
 }
 </style>
@@ -66,15 +83,68 @@ img{
 <input type="number" id="estoque" placeholder="Quantidade em Estoque">
 <input type="file" id="imagemFile">
 
+<button class="btn-primary" onclick="salvar()">Salvar / Atualizar</button>
+</div>
+
+<div class="card">
+<h3>Produtos Cadastrados</h3>
+<div id="lista"></div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY_AQUI",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_STORAGE_BUCKET",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+const lista = document.getElementById("lista");
+
+db.collection("produtos").onSnapshot(snapshot => {
+    lista.innerHTML = "";
+
+    snapshot.forEach(doc => {
+        const p = doc.data();
+
+        lista.innerHTML += `
+        <div class="produto">
+            <div class="produto-info">
+                <img src="${p.imagem || ''}">
+                <div>
+                    <strong>${p.nome}</strong><br>
+                    R$ ${p.preco} <br>
+                    Estoque: ${p.estoque}
+                </div>
+            </div>
+            <div>
+                <button class="btn-edit" onclick="editar('${doc.id}','${p.nome}','${p.descricao}','${p.preco}','${p.estoque}','${p.imagem}')">Editar</button>
+                <button class="btn-danger" onclick="excluir('${doc.id}')">Excluir</button>
+            </div>
+        </div>
+        `;
+    });
+});
+
 async function salvar(){
 
     const id = document.getElementById("docId").value;
-    const nomeInput = document.getElementById("nome").value;
-    const descricaoInput = document.getElementById("descricao").value;
-    const precoInput = document.getElementById("preco").value;
-    const estoqueInput = document.getElementById("estoque").value;
-    const fileInput = document.getElementById("imagemFile");
-    const file = fileInput.files[0];
+    const nome = document.getElementById("nome").value;
+    const descricao = document.getElementById("descricao").value;
+    const preco = Number(document.getElementById("preco").value);
+    const estoque = Number(document.getElementById("estoque").value);
+    const file = document.getElementById("imagemFile").files[0];
 
     try {
 
@@ -87,10 +157,10 @@ async function salvar(){
         }
 
         const produto = {
-            nome: nomeInput,
-            descricao: descricaoInput,
-            preco: Number(precoInput),
-            estoque: Number(estoqueInput),
+            nome,
+            descricao,
+            preco,
+            estoque,
             imagem: imagemURL
         };
 
@@ -115,106 +185,31 @@ async function salvar(){
 
     } catch (erro) {
         console.error("Erro:", erro);
-        alert("Erro ao salvar. Veja o console.");
+        alert("Erro ao salvar. Verifique o console.");
     }
-}
-</div>
-
-<div class="card">
-<h3>Produtos</h3>
-<div id="lista"></div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCEYntSBEXEv58NV_Eck53HDG3CuzdlwhQ",
-  authDomain: "sgl-uber-store.firebaseapp.com",
-  projectId: "sgl-uber-store",
-  storageBucket: "sgl-uber-store.firebasestorage.app",
-  messagingSenderId: "225084657523",
-  appId: "1:225084657523:web:30e89e1f048fd1fd40bf06"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const storage = firebase.storage();
-
-const lista = document.getElementById("lista");
-
-db.collection("produtos").onSnapshot(snapshot => {
-    lista.innerHTML = "";
-    snapshot.forEach(doc => {
-        const p = doc.data();
-        lista.innerHTML += `
-        <div class="produto">
-            <img src="${p.imagem}">
-            <b>${p.nome}</b> - R$ ${p.preco} 
-            | Estoque: ${p.estoque}
-            <button class="btn-edit" onclick="editar('${doc.id}','${p.nome}','${p.descricao}','${p.preco}','${p.estoque}','${p.imagem}')">Editar</button>
-            <button class="btn-danger" onclick="excluir('${doc.id}')">Excluir</button>
-        </div>
-        `;
-    });
-});
-
-async function salvar(){
-    const id = docId.value;
-    const file = imagemFile.files[0];
-
-    let imagemURL = "";
-
-    if(file){
-        const storageRef = storage.ref("produtos/"+Date.now()+"_"+file.name);
-        await storageRef.put(file);
-        imagemURL = await storageRef.getDownloadURL();
-    }
-
-    const produto = {
-        nome: nome.value,
-        descricao: descricao.value,
-        preco: preco.value,
-        estoque: estoque.value,
-        imagem: imagemURL
-    };
-
-    if(id){
-        if(!imagemURL){
-            const docOld = await db.collection("produtos").doc(id).get();
-            produto.imagem = docOld.data().imagem;
-        }
-        await db.collection("produtos").doc(id).update(produto);
-        alert("Atualizado!");
-    }else{
-        await db.collection("produtos").add(produto);
-        alert("Cadastrado!");
-    }
-
-    limpar();
 }
 
 function editar(id,n,d,p,e,img){
-    docId.value = id;
-    nome.value = n;
-    descricao.value = d;
-    preco.value = p;
-    estoque.value = e;
+    document.getElementById("docId").value = id;
+    document.getElementById("nome").value = n;
+    document.getElementById("descricao").value = d;
+    document.getElementById("preco").value = p;
+    document.getElementById("estoque").value = e;
 }
 
 function excluir(id){
-    if(confirm("Deseja excluir?")){
+    if(confirm("Deseja excluir este produto?")){
         db.collection("produtos").doc(id).delete();
     }
 }
 
 function limpar(){
-    docId.value="";
-    document.querySelectorAll("input").forEach(i=>{
-        if(i.type!="hidden") i.value="";
-    });
+    document.getElementById("docId").value = "";
+    document.getElementById("nome").value = "";
+    document.getElementById("descricao").value = "";
+    document.getElementById("preco").value = "";
+    document.getElementById("estoque").value = "";
+    document.getElementById("imagemFile").value = "";
 }
 </script>
 
