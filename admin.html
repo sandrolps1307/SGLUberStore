@@ -7,12 +7,11 @@
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <style>
 body{
-    font-family: Arial;
-    background:#f4f6f9;
+    font-family: Arial, sans-serif;
+    background:#f1f3f6;
     padding:20px;
 }
 .container{
@@ -23,9 +22,9 @@ h2{
     text-align:center;
 }
 .card{
-    background:white;
+    background:#fff;
     padding:20px;
-    border-radius:10px;
+    border-radius:12px;
     box-shadow:0 5px 15px rgba(0,0,0,0.1);
     margin-bottom:20px;
 }
@@ -33,44 +32,44 @@ input, textarea{
     width:100%;
     padding:10px;
     margin-bottom:10px;
-    border-radius:6px;
+    border-radius:8px;
     border:1px solid #ccc;
 }
 button{
     padding:10px 15px;
     border:none;
-    border-radius:6px;
+    border-radius:8px;
     cursor:pointer;
 }
-.btn{
+.btn-primary{
     background:#007bff;
-    color:white;
-}
-.btn-danger{
-    background:#dc3545;
-    color:white;
+    color:#fff;
 }
 .btn-edit{
     background:#28a745;
-    color:white;
+    color:#fff;
+}
+.btn-danger{
+    background:#dc3545;
+    color:#fff;
 }
 .produto{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:10px;
+    padding:10px 0;
     border-bottom:1px solid #eee;
 }
 .produto img{
     width:60px;
     height:60px;
     object-fit:cover;
-    border-radius:6px;
+    border-radius:8px;
 }
 .produto-info{
     display:flex;
-    align-items:center;
     gap:10px;
+    align-items:center;
 }
 </style>
 </head>
@@ -87,9 +86,9 @@ button{
 <textarea id="descricao" placeholder="Descrição"></textarea>
 <input type="number" id="preco" placeholder="Preço">
 <input type="number" id="estoque" placeholder="Quantidade em estoque">
-<input type="file" id="imagemFile">
+<input type="text" id="imagemUrl" placeholder="URL da imagem (GitHub RAW)">
 
-<button class="btn" onclick="salvarProduto()">Salvar / Atualizar</button>
+<button class="btn-primary" onclick="salvarProduto()">Salvar / Atualizar</button>
 </div>
 
 <div class="card">
@@ -100,18 +99,15 @@ button{
 </div>
 
 <script>
+
 const firebaseConfig = {
-  apiKey: "AIzaSyCEYntSBEXEv58NV_Eck53HDG3CuzdlwhQ",
+  apiKey: "SUA_API_KEY",
   authDomain: "sgl-uber-store.firebaseapp.com",
   projectId: "sgl-uber-store",
-  storageBucket: "sgl-uber-store.firebasestorage.app",
-  messagingSenderId: "225084657523",
-  appId: "1:225084657523:web:30e89e1f048fd1fd40bf06"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const storage = firebase.storage();
 
 const lista = document.getElementById("listaProdutos");
 
@@ -122,31 +118,20 @@ async function salvarProduto(){
     const descricao = document.getElementById("descricao").value;
     const preco = document.getElementById("preco").value;
     const estoque = document.getElementById("estoque").value;
-    const file = document.getElementById("imagemFile").files[0];
+    const imagemUrl = document.getElementById("imagemUrl").value;
 
     if(!nome || !preco){
         alert("Preencha nome e preço");
         return;
     }
 
-    let imageUrl = "";
-
-    if(file){
-        const storageRef = storage.ref("produtos/" + Date.now() + "_" + file.name);
-        await storageRef.put(file);
-        imageUrl = await storageRef.getDownloadURL();
-    }
-
     const produto = {
         nome,
         descricao,
         preco: parseFloat(preco),
-        estoque: parseInt(estoque) || 0
+        estoque: parseInt(estoque) || 0,
+        imagem: imagemUrl
     };
-
-    if(imageUrl){
-        produto.imagem = imageUrl;
-    }
 
     if(id){
         await db.collection("produtos").doc(id).update(produto);
@@ -165,7 +150,7 @@ function limparFormulario(){
     document.getElementById("descricao").value = "";
     document.getElementById("preco").value = "";
     document.getElementById("estoque").value = "";
-    document.getElementById("imagemFile").value = "";
+    document.getElementById("imagemUrl").value = "";
 }
 
 async function editar(id){
@@ -177,6 +162,7 @@ async function editar(id){
     document.getElementById("descricao").value = p.descricao;
     document.getElementById("preco").value = p.preco;
     document.getElementById("estoque").value = p.estoque;
+    document.getElementById("imagemUrl").value = p.imagem;
 }
 
 async function excluir(id){
@@ -210,6 +196,7 @@ db.collection("produtos").onSnapshot(snapshot => {
         `;
     });
 });
+
 </script>
 
 </body>
