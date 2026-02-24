@@ -1,29 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Admin - SGL</title>
+<title>Painel Admin - SGL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    font-family: Arial;
+    background:#f3f4f6;
+    padding:20px;
+}
+.card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+}
+input{
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+}
+button{
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+.btn-primary{
+    background:#2563eb;
+    color:white;
+}
+.btn-danger{
+    background:#dc2626;
+    color:white;
+}
+.btn-edit{
+    background:#f59e0b;
+    color:white;
+}
+.produto{
+    padding:10px;
+    border-bottom:1px solid #eee;
+}
+img{
+    width:60px;
+    border-radius:8px;
+}
+</style>
 </head>
-<body style="font-family:sans-serif;padding:20px">
+<body>
 
-<h2>Cadastro de Produto</h2>
+<h2>Painel Administrativo</h2>
 
+<div class="card">
 <input type="hidden" id="docId">
 
-<input type="text" id="nome" placeholder="Nome"><br><br>
-<input type="text" id="descricao" placeholder="Descrição"><br><br>
-<input type="text" id="preco" placeholder="Preço"><br><br>
-<input type="text" id="imagem" placeholder="URL da imagem"><br><br>
+<input type="text" id="nome" placeholder="Nome do Produto">
+<input type="text" id="descricao" placeholder="Descrição">
+<input type="number" id="preco" placeholder="Preço">
+<input type="number" id="estoque" placeholder="Quantidade em Estoque">
+<input type="file" id="imagemFile">
 
-<button onclick="salvar()">Salvar / Atualizar</button>
+<button class="btn-primary" onclick="salvar()">Salvar / Atualizar</button>
+</div>
 
-<hr>
-
-<h3>Produtos cadastrados</h3>
+<div class="card">
+<h3>Produtos</h3>
 <div id="lista"></div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -37,6 +90,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 const lista = document.getElementById("lista");
 
@@ -45,48 +99,71 @@ db.collection("produtos").onSnapshot(snapshot => {
     snapshot.forEach(doc => {
         const p = doc.data();
         lista.innerHTML += `
-            <div style="margin-bottom:10px;">
-                <b>${p.nome}</b> - R$ ${p.preco}
-                <button onclick="editar('${doc.id}','${p.nome}','${p.descricao}','${p.preco}','${p.imagem}')">✏️</button>
-                <button onclick="excluir('${doc.id}')">🗑</button>
-            </div>
+        <div class="produto">
+            <img src="${p.imagem}">
+            <b>${p.nome}</b> - R$ ${p.preco} 
+            | Estoque: ${p.estoque}
+            <button class="btn-edit" onclick="editar('${doc.id}','${p.nome}','${p.descricao}','${p.preco}','${p.estoque}','${p.imagem}')">Editar</button>
+            <button class="btn-danger" onclick="excluir('${doc.id}')">Excluir</button>
+        </div>
         `;
     });
 });
 
-function salvar() {
-    const id = document.getElementById("docId").value;
+async function salvar(){
+    const id = docId.value;
+    const file = imagemFile.files[0];
+
+    let imagemURL = "";
+
+    if(file){
+        const storageRef = storage.ref("produtos/"+Date.now()+"_"+file.name);
+        await storageRef.put(file);
+        imagemURL = await storageRef.getDownloadURL();
+    }
+
     const produto = {
         nome: nome.value,
         descricao: descricao.value,
         preco: preco.value,
-        imagem: imagem.value
+        estoque: estoque.value,
+        imagem: imagemURL
     };
 
-    if (id) {
-        db.collection("produtos").doc(id).update(produto);
-        alert("Produto atualizado!");
-    } else {
-        db.collection("produtos").add(produto);
-        alert("Produto cadastrado!");
+    if(id){
+        if(!imagemURL){
+            const docOld = await db.collection("produtos").doc(id).get();
+            produto.imagem = docOld.data().imagem;
+        }
+        await db.collection("produtos").doc(id).update(produto);
+        alert("Atualizado!");
+    }else{
+        await db.collection("produtos").add(produto);
+        alert("Cadastrado!");
     }
 
-    document.getElementById("docId").value = "";
-    document.querySelectorAll("input").forEach(i => i.value = "");
+    limpar();
 }
 
-function editar(id, nomeP, descricaoP, precoP, imagemP) {
-    document.getElementById("docId").value = id;
-    nome.value = nomeP;
-    descricao.value = descricaoP;
-    preco.value = precoP;
-    imagem.value = imagemP;
+function editar(id,n,d,p,e,img){
+    docId.value = id;
+    nome.value = n;
+    descricao.value = d;
+    preco.value = p;
+    estoque.value = e;
 }
 
-function excluir(id) {
-    if (confirm("Deseja excluir este produto?")) {
+function excluir(id){
+    if(confirm("Deseja excluir?")){
         db.collection("produtos").doc(id).delete();
     }
+}
+
+function limpar(){
+    docId.value="";
+    document.querySelectorAll("input").forEach(i=>{
+        if(i.type!="hidden") i.value="";
+    });
 }
 </script>
 
