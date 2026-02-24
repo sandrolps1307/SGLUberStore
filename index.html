@@ -47,22 +47,39 @@ body {
     margin-top: 8px;
 }
 
+.estoque-ok {
+    color: #22c55e;
+    font-weight: bold;
+}
+
+.estoque-zero {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+button {
+    background-color: #ff6a00;
+    color: white;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+button:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+
 .pix-card {
     background: #1a1a1a;
     border-radius: 20px;
     padding: 20px;
     text-align: center;
     box-shadow: 0 10px 30px rgba(255,106,0,0.25);
-}
-
-.copy-btn {
-    background-color: #ff6a00;
-    color: white;
-    border: none;
-    padding: 12px;
-    width: 100%;
-    border-radius: 12px;
-    cursor: pointer;
 }
 </style>
 </head>
@@ -81,7 +98,7 @@ body {
     <div class="pix-card">
         <h3>💳 Pagamento via Pix</h3>
         <img src="pix.jpg" width="180">
-        <button class="copy-btn" onclick="copyPix()">Copiar código Pix</button>
+        <button onclick="copyPix()">Copiar código Pix</button>
         <p id="pixCode" style="display:none;">
 00020101021126360014br.gov.bcb.pix0114+55119654772485204000053039865802BR5922SANDRO GUIMARAES LOPES6009SAO PAULO622905251KJ5NZN21YP177KGJM431ETV06304068B
         </p>
@@ -89,6 +106,7 @@ body {
 
 </div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -105,34 +123,32 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const productsDiv = document.getElementById("products");
-
 db.collection("produtos").onSnapshot(snapshot => {
-    const container = document.getElementById("produtos");
+    const container = document.getElementById("products");
     container.innerHTML = "";
 
     snapshot.forEach(doc => {
         const p = doc.data();
 
-        let estoqueInfo = "";
-        let botaoCompra = "";
+        let estoqueHTML = "";
+        let botaoHTML = "";
 
         if (p.estoque > 0) {
-            estoqueInfo = `<p style="color:green;">Em estoque: ${p.estoque}</p>`;
-            botaoCompra = `<button onclick="comprar('${doc.id}')">Comprar</button>`;
+            estoqueHTML = `<p class="estoque-ok">Em estoque: ${p.estoque}</p>`;
+            botaoHTML = `<button>Comprar</button>`;
         } else {
-            estoqueInfo = `<p style="color:red;">Produto esgotado</p>`;
-            botaoCompra = `<button disabled style="background:#ccc;">Indisponível</button>`;
+            estoqueHTML = `<p class="estoque-zero">Produto esgotado</p>`;
+            botaoHTML = `<button disabled>Indisponível</button>`;
         }
 
         container.innerHTML += `
             <div class="card">
-                <img src="${p.imagem}" width="150">
+                <img src="${p.imagem}">
                 <h3>${p.nome}</h3>
                 <p>${p.descricao}</p>
-                <p><b>R$ ${p.preco}</b></p>
-                ${estoqueInfo}
-                ${botaoCompra}
+                <p class="price">R$ ${p.preco}</p>
+                ${estoqueHTML}
+                ${botaoHTML}
             </div>
         `;
     });
@@ -147,4 +163,3 @@ function copyPix() {
 
 </body>
 </html>
-
