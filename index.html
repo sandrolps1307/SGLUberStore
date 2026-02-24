@@ -107,16 +107,32 @@ const db = firebase.firestore();
 
 const productsDiv = document.getElementById("products");
 
-db.collection("produtos").onSnapshot((snapshot) => {
-    productsDiv.innerHTML = "";
-    snapshot.forEach((doc) => {
+db.collection("produtos").onSnapshot(snapshot => {
+    const container = document.getElementById("produtos");
+    container.innerHTML = "";
+
+    snapshot.forEach(doc => {
         const p = doc.data();
-        productsDiv.innerHTML += `
+
+        let estoqueInfo = "";
+        let botaoCompra = "";
+
+        if (p.estoque > 0) {
+            estoqueInfo = `<p style="color:green;">Em estoque: ${p.estoque}</p>`;
+            botaoCompra = `<button onclick="comprar('${doc.id}')">Comprar</button>`;
+        } else {
+            estoqueInfo = `<p style="color:red;">Produto esgotado</p>`;
+            botaoCompra = `<button disabled style="background:#ccc;">Indisponível</button>`;
+        }
+
+        container.innerHTML += `
             <div class="card">
-                <img src="${p.imagem}">
+                <img src="${p.imagem}" width="150">
                 <h3>${p.nome}</h3>
                 <p>${p.descricao}</p>
-                <div class="price">R$ ${p.preco}</div>
+                <p><b>R$ ${p.preco}</b></p>
+                ${estoqueInfo}
+                ${botaoCompra}
             </div>
         `;
     });
@@ -131,3 +147,4 @@ function copyPix() {
 
 </body>
 </html>
+
