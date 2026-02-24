@@ -8,9 +8,9 @@
 <style>
 body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: #0f0f0f;
-    color: #ffffff;
+    color: white;
 }
 
 .app-container {
@@ -22,73 +22,37 @@ body {
 .header {
     text-align: center;
     margin-bottom: 30px;
-    animation: fadeDown 0.8s ease;
-}
-
-.header h1 {
-    font-size: 24px;
-    margin: 0;
-    font-weight: 600;
 }
 
 .subtitle {
-    font-size: 14px;
     color: #ff6a00;
-    margin-top: 5px;
 }
 
 .card {
     background: #1a1a1a;
-    border-radius: 22px;
+    border-radius: 20px;
     padding: 15px;
     margin-bottom: 20px;
     box-shadow: 0 10px 25px rgba(255,106,0,0.15);
-    transform: translateY(20px);
-    opacity: 0;
-    animation: fadeUp 0.8s ease forwards;
 }
-
-.card:nth-child(2) { animation-delay: 0.2s; }
-.card:nth-child(3) { animation-delay: 0.4s; }
 
 .card img {
     width: 100%;
-    border-radius: 18px;
-}
-
-.card h3 {
-    margin: 10px 0 5px;
-    font-size: 16px;
-}
-
-.card p {
-    font-size: 14px;
-    color: #aaa;
-    margin: 0;
+    border-radius: 15px;
 }
 
 .price {
-    margin-top: 8px;
-    font-size: 18px;
-    font-weight: bold;
     color: #ff6a00;
+    font-weight: bold;
+    margin-top: 8px;
 }
 
 .pix-card {
     background: #1a1a1a;
-    border-radius: 22px;
+    border-radius: 20px;
     padding: 20px;
     text-align: center;
     box-shadow: 0 10px 30px rgba(255,106,0,0.25);
-    animation: fadeUp 0.8s ease forwards;
-    animation-delay: 0.6s;
-    opacity: 0;
-}
-
-.pix-card img {
-    width: 180px;
-    margin: 15px 0;
-    border-radius: 12px;
 }
 
 .copy-btn {
@@ -97,45 +61,8 @@ body {
     border: none;
     padding: 12px;
     width: 100%;
-    border-radius: 14px;
-    font-size: 14px;
-    font-weight: 500;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.copy-btn:hover {
-    transform: scale(1.03);
-}
-
-.copy-btn:active {
-    transform: scale(0.97);
-}
-
-.footer {
-    text-align: center;
-    font-size: 12px;
-    color: #777;
-    margin-top: 30px;
-}
-
-/* ANIMAÇÕES */
-@keyframes fadeUp {
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
 }
 </style>
 </head>
@@ -146,51 +73,59 @@ body {
 
     <div class="header">
         <h1>SGL Uber Store</h1>
-        <div class="subtitle">🔋 Esqueceu seu Cabo? Temos aqui !!!!</div>
+        <div class="subtitle">🔋 Esqueceu seu carregador? Temos aqui.</div>
     </div>
 
-    <div class="card">
-        <img src="oberon.jpg" alt="Cabo Oberon">
-        <h3>Cabo USB Tipo C – Oberon</h3>
-        <p>Cabo carregador e dados em nylon resistente.</p>
-        <div class="price">R$ 15,00</div>
-    </div>
-
-    <div class="card">
-        <img src="inova.jpg" alt="Cabo Inova">
-        <h3>Cabo USB Tipo C – INOVA</h3>
-        <p>USB Type C 3.4A - 1 Metro - Carregamento rápido.</p>
-        <div class="price">R$ 20,00</div>
-    </div>
+    <div id="products"></div>
 
     <div class="pix-card">
         <h3>💳 Pagamento via Pix</h3>
-        <p style="font-size:13px;color:#aaa;">
-            Escaneie o QR Code ou copie o código abaixo
-        </p>
-
-        <img src="pix.jpg" alt="QR Code Pix">
-
-        <button class="copy-btn" onclick="copyPix()">
-            Copiar código Pix
-        </button>
-
+        <img src="pix.jpg" width="180">
+        <button class="copy-btn" onclick="copyPix()">Copiar código Pix</button>
         <p id="pixCode" style="display:none;">
 00020101021126360014br.gov.bcb.pix0114+55119654772485204000053039865802BR5922SANDRO GUIMARAES LOPES6009SAO PAULO622905251KJ5NZN21YP177KGJM431ETV06304068B
         </p>
     </div>
 
-    <div class="footer">
-        © 2026 SGL Uber Store
-    </div>
-
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCEYntSBEXEv58NV_Eck53HDG3CuzdlwhQ",
+  authDomain: "sgl-uber-store.firebaseapp.com",
+  projectId: "sgl-uber-store",
+  storageBucket: "sgl-uber-store.firebasestorage.app",
+  messagingSenderId: "225084657523",
+  appId: "1:225084657523:web:30e89e1f048fd1fd40bf06"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const productsDiv = document.getElementById("products");
+
+db.collection("produtos").onSnapshot((snapshot) => {
+    productsDiv.innerHTML = "";
+    snapshot.forEach((doc) => {
+        const p = doc.data();
+        productsDiv.innerHTML += `
+            <div class="card">
+                <img src="${p.imagem}">
+                <h3>${p.nome}</h3>
+                <p>${p.descricao}</p>
+                <div class="price">R$ ${p.preco}</div>
+            </div>
+        `;
+    });
+});
+
 function copyPix() {
     const pix = document.getElementById("pixCode").innerText;
     navigator.clipboard.writeText(pix);
-    alert("Código Pix copiado com sucesso!");
+    alert("Código Pix copiado!");
 }
 </script>
 
