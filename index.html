@@ -137,7 +137,7 @@ db.collection("produtos").onSnapshot(snapshot => {
 
         if (p.estoque > 0) {
             estoqueHTML = `<p class="estoque-ok">Em estoque: ${p.estoque}</p>`;
-            botaoHTML = `<button>Comprar</button>`;
+            //botaoHTML = `<button>Comprar</button>`;
         } else {
             estoqueHTML = `<p class="estoque-zero">Produto esgotado</p>`;
             botaoHTML = `<button disabled>Indisponível</button>`;
@@ -165,5 +165,6 @@ function copyPix() {
 
 </body>
 </html>
+
 
 
