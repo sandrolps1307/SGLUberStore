@@ -66,7 +66,58 @@ img{
 <input type="number" id="estoque" placeholder="Quantidade em Estoque">
 <input type="file" id="imagemFile">
 
-<button class="btn-primary" onclick="alert('clicou'); salvar()">Salvar / Atualizar</button>
+async function salvar(){
+
+    const id = document.getElementById("docId").value;
+    const nomeInput = document.getElementById("nome").value;
+    const descricaoInput = document.getElementById("descricao").value;
+    const precoInput = document.getElementById("preco").value;
+    const estoqueInput = document.getElementById("estoque").value;
+    const fileInput = document.getElementById("imagemFile");
+    const file = fileInput.files[0];
+
+    try {
+
+        let imagemURL = "";
+
+        if(file){
+            const storageRef = storage.ref("produtos/" + Date.now() + "_" + file.name);
+            await storageRef.put(file);
+            imagemURL = await storageRef.getDownloadURL();
+        }
+
+        const produto = {
+            nome: nomeInput,
+            descricao: descricaoInput,
+            preco: Number(precoInput),
+            estoque: Number(estoqueInput),
+            imagem: imagemURL
+        };
+
+        if(id){
+
+            if(!imagemURL){
+                const docOld = await db.collection("produtos").doc(id).get();
+                produto.imagem = docOld.data().imagem;
+            }
+
+            await db.collection("produtos").doc(id).update(produto);
+            alert("Produto atualizado!");
+
+        } else {
+
+            await db.collection("produtos").add(produto);
+            alert("Produto cadastrado!");
+
+        }
+
+        limpar();
+
+    } catch (erro) {
+        console.error("Erro:", erro);
+        alert("Erro ao salvar. Veja o console.");
+    }
+}
 </div>
 
 <div class="card">
