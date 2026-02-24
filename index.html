@@ -92,11 +92,23 @@ body {
 
     <div class="pix-card">
         <h3>💳 Pagamento via Pix</h3>
-        <img src="pix.jpg" width="180">
-        <button onclick="copyPix()">Copiar código Pix</button>
+        <p style="font-size:13px;color:#aaa;">
+            Escaneie o QR Code ou copie o código abaixo
+        </p>
+
+        <img src="pix.jpg" alt="QR Code Pix">
+
+        <button class="copy-btn" onclick="copyPix()">
+            Copiar código Pix
+        </button>
+
         <p id="pixCode" style="display:none;">
 00020101021126360014br.gov.bcb.pix0114+55119654772485204000053039865802BR5922SANDRO GUIMARAES LOPES6009SAO PAULO622905251KJ5NZN21YP177KGJM431ETV06304068B
         </p>
+    </div>
+
+    <div class="footer">
+        © 2026 SGL Uber Store
     </div>
 
 </div>
@@ -158,3 +170,4 @@ function copyPix() {
 
 </body>
 </html>
+
